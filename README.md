@@ -311,4 +311,6 @@ This guide is released under the [MIT License](LICENSE). You are free to use, ad
 
 ---
 
-*Contributions welcome. If you encounter a new campaign variant or a better analysis technique, open an issue or submit a PR.*
+> *Contributions welcome. If you encounter a new campaign variant or a better analysis technique, open an issue or submit a PR.*
+
+ Note: The URL analyzed in this repo was a real-world scammer URL reported today. It follows a recurring pattern: the same schemes, the same layouts, and the same text architecture are used repeatedly to target developers.
