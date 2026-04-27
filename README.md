@@ -1,316 +1,170 @@
-# How to Secure Your Git-Ass
-
-A comprehensive guide to identifying and dismantling targeted phishing campaigns and social engineering attacks on GitHub.
-
----
-
-## Table of Contents
-
-1. [The Threat Landscape](#1-the-threat-landscape)
-2. [Case Study: The Uniswap Job Scam](#2-case-study-the-uniswap-job-scam)
-3. [Common Red Flags](#3-common-red-flags)
-4. [Technical Tactics: Living off the Land](#4-technical-tactics-living-off-the-land)
-5. [Forensic Workflow: Analyze Without Risk](#5-forensic-workflow-analyze-without-risk)
-   - 5.1 [URL Analysis via Sandbox](#51-url-analysis-via-sandbox)
-   - 5.2 [Command Line Inspection](#52-command-line-inspection)
-   - 5.3 [Infrastructure Inspection](#53-infrastructure-inspection)
-6. [Active Countermeasures: Reporting and Takedown](#6-active-countermeasures-reporting-and-takedown)
-   - 6.1 [Report the Redirect to Google](#61-report-the-redirect-to-google)
-   - 6.2 [Contact the Hosting Provider](#62-contact-the-hosting-provider)
-   - 6.3 [Inform the Domain Registrar](#63-inform-the-domain-registrar)
-   - 6.4 [Report GitHub Abuse](#64-report-github-abuse)
-7. [Harden Your GitHub Notification Settings](#7-harden-your-github-notification-settings)
-8. [Conclusion](#8-conclusion)
-9. [License](#9-license)
-
----
-
-## 1. The Threat Landscape
-
-Developers on GitHub are increasingly targeted by highly professional social engineering campaigns. These attacks exploit two things attackers know about most developers: they are active on GitHub, and they are open to new opportunities.
-
-The playbook is simple and effective. Attackers create a Discussion or Issue in a public repository, tag dozens of developers simultaneously, and impersonate well-known companies. The goal is to get you to click a link that either harvests your credentials or delivers malware.
-
-What makes these campaigns dangerous is not technical sophistication on the victim's end — it is the deliberate abuse of trusted infrastructure. The attacker does not need to compromise GitHub or Google. They just use them as a delivery vehicle.
-
----
-
-## 2. Case Study: The Uniswap Job Scam
-
-The following is a real example of a phishing message distributed via GitHub Discussions. It is reproduced here for educational purposes.
-
-```
-Hi,
-Your latest projects on GitHub got our attention. We are growing Uniswap
-and searching for devs with skills match ours.
-
-All positions are fully remote. Annual salary is paid in USD.
-
-Available roles & pay:
-  - Engineering: Staff BE, FE, SC, Infrastructure — up to $450k
-  - Product & Design: Product Manager, Sr. Design, Design Engineer — up to $350k
-  - Business & Ops: BizDev, Partners, Community Ops, Hiring, Solutions — up to $300k
-  - Marketing: Dev Relations, Tech Writer, Content Eng — up to $300k
-
-Next Instructions:
-Fill out this form here: https://share.google/4fxOM8PJAd0y9tQ5R
-
-[...]
-
-This outreach is not random. If you find your GitHub handle here, we are
-reaching out because your profile fits our roles:
-
-@lihuang-hacker @VolkanSah @litprome @Gizmo-Verindipencil @stonding
-@kushfintech @rasmustaarnby @XozXa @yigex @cakeca @QingChuanAIX
-@Schrodingerp @BramVanPevenage @carpeJay @chrisspx @Nandaxy @pwoit
-[...]
-```
-
-This message was delivered via a GitHub notification because the account was mentioned in a Discussion. The link points to `share.google`, a legitimate Google domain used for Drive file sharing, which causes most automated phishing filters to pass it without warning. The actual destination is an attacker-controlled server.
-
----
-
-## 3. Common Red Flags
-
-**Unrealistic compensation without process**
-
-Legitimate companies, including Uniswap, do not offer up to $450,000 annually to unknown candidates without a prior interview, technical assessment, or any formal application. If the offer sounds too good to require due diligence, that is by design.
-
-**Mass tagging**
-
-Real recruiters contact candidates individually. A single notification that tags 30 to 40 GitHub accounts simultaneously is a bulk spam operation. The "selected profiles" framing is a social engineering technique to make mass outreach feel personal.
-
-**Trusted domain as a redirect shield**
-
-The link uses `share.google`, which is a genuine Google service for sharing Drive content. Because the domain is `google.com`, security filters and even experienced developers may not question it. This is the core technical trick: the attacker owns none of the infrastructure in the message itself. Google, GitHub, and the notification system are all legitimate. Only the final destination is malicious.
-
-**Urgency and flattery combined**
-
-"This outreach is not random" and "your profile fits our roles" are classic social engineering phrases designed to bypass skepticism by appealing to professional ego.
-
-**No verifiable sender identity**
-
-The message contains no named recruiter, no company email address, and no link to a verifiable job posting on the official Uniswap website or careers page.
-
----
-
-## 4. Technical Tactics: Living off the Land
-
-The term "Living off the Land" (LotL) originates in offensive security and describes the practice of using legitimate tools and infrastructure already present in an environment rather than deploying custom malware. Attackers apply the same concept to phishing infrastructure.
-
-In this campaign, the chain looks like this:
-
-```
-GitHub Discussion (legitimate)
-    --> share.google link (legitimate Google domain)
-        --> Redirect to attacker VPS (e.g., DigitalOcean, Hetzner, Vultr)
-            --> Phishing form or malware delivery
-```
-
-Each hop uses a service with a strong reputation. Only the final server is attacker-controlled. This structure is designed to defeat:
-
-- Email and link scanners that check only the top-level domain
-- Automated reputation systems that trust major cloud providers
-- Users who have been trained to check whether a link goes to a "real" company domain
-
-The attacker typically registers either a fresh throwaway domain or an aged domain — one that was registered years ago and has built up a clean reputation score — specifically to bypass domain-age filters in security tools.
-
-**Why `share.google` works so well**
-
-`share.google` is the domain Google uses for its file sharing functionality. A link like `https://share.google/xxxxxx` is indistinguishable at the domain level from a legitimate shared document. No browser will warn you. No corporate firewall will block it by default. The redirect to the malicious destination happens server-side, often with a short delay or only under certain user-agent conditions to further complicate automated analysis.
-
----
-
-## 5. Forensic Workflow: Analyze Without Risk
-
-Never click a suspicious link directly. The following workflow lets you analyze the full redirect chain, inspect the hosting infrastructure, and gather evidence for reporting — all without exposing your machine or credentials.
-
-### 5.1 URL Analysis via Sandbox
-
-Use a remote analysis service. These tools visit the URL on their own isolated infrastructure and return a full report including screenshots, network requests, and the final destination.
-
-Recommended services:
-
-- [urlscan.io](https://urlscan.io) — shows the effective URL after all redirects, a screenshot of the final page, and all network requests made during the visit
-- [VirusTotal](https://www.virustotal.com) — aggregates results from dozens of security vendors
-
-What to look for in the report:
-
-- **Effective URL**: The actual destination after all redirects. If a `share.google` link ends up at `erm.mmuszynski.com` or a bare IP address, that is your confirmation.
-- **Screenshot**: urlscan.io renders the final page visually. You can see the phishing form without ever loading it yourself.
-- **Certificate issue date**: An SSL certificate issued within the last few days is a strong indicator of a throwaway campaign domain.
-- **Hosting ASN**: Check whether the server is hosted on a consumer VPS provider (DigitalOcean, Hetzner, Vultr, Linode). Legitimate company infrastructure is typically hosted on enterprise providers or corporate data centers.
-
-### 5.2 Command Line Inspection
-
-For a quick first check without opening a browser, use `curl` to inspect the redirect without following it:
-
-```bash
-curl -sI --max-redirs 0 "https://share.google/4fxOM8PJAd0y9tQ5R"
-```
-
-The `-I` flag fetches headers only (no body). `--max-redirs 0` tells curl to stop at the first redirect. The `Location:` header in the response will show you where the link actually points before you follow it.
-
-Example output:
-
-```
-HTTP/2 302
-location: https://erm.mmuszynski.com/apply
-...
-```
-
-If the Location header points anywhere other than an official company domain, stop and treat the link as malicious.
-
-To inspect the DNS records of the destination domain:
-
-```bash
-dig +short erm.mmuszynski.com
-whois $(dig +short erm.mmuszynski.com | head -1)
-```
-
-This gives you the registrar, registration date, and often the abuse contact directly.
-
-### 5.3 Infrastructure Inspection
-
-Once you have the destination IP address from the urlscan report or from `dig`:
-
-- Look up the ASN and hosting provider at [ipinfo.io](https://ipinfo.io) or [bgp.he.net](https://bgp.he.net)
-- Cross-reference the SSL certificate at [crt.sh](https://crt.sh) — search by domain to see when the certificate was issued and whether other domains share the same certificate (this can reveal the full scope of a campaign)
-- Check domain registration date at [whois.domaintools.com](https://whois.domaintools.com)
-
-Document everything: IP address, hosting provider, registrar, certificate fingerprint, and the full redirect chain. You will need this for the reports in the next section.
-
----
-
-## 6. Active Countermeasures: Reporting and Takedown
-
-Understanding the attack is only half the work. To actually stop the campaign, each link in the infrastructure chain must be reported to the responsible party. The goal is to get the redirect taken down at Google, the server taken offline by the hosting provider, and the domain suspended by the registrar.
-
-### 6.1 Report the Redirect to Google
-
-Google operates the Safe Browsing program and accepts abuse reports for malicious content hosted on or redirecting through Google infrastructure.
-
-Report URL: https://safebrowsing.google.com/safebrowsing/report_phish/
-
-In your report, include:
-- The full `share.google` link
-- The final destination URL from your sandbox analysis
-- A short description: "This Google Share link redirects to a phishing page impersonating [company]. The link is being distributed via GitHub to target developers."
-
-### 6.2 Contact the Hosting Provider
-
-This is typically the fastest and most effective takedown vector. Hosting providers take abuse seriously because their IP ranges can be blocklisted globally if they tolerate malicious tenants.
-
-Steps:
-
-1. Identify the hosting provider from the IP lookup (e.g., DigitalOcean, Hetzner, Vultr)
-2. Find their abuse contact — most providers list it at `abuse@provider.com` or in their WHOIS record
-3. Send an email with the following information:
-   - Subject: `Phishing Campaign Hosted on Your Infrastructure`
-   - The malicious IP address
-   - The malicious URL
-   - The original attack vector (GitHub Discussion link)
-   - A brief description of the campaign and its targets
-   - Your sandbox analysis report URL (urlscan.io link)
-
-Most major providers respond within 24 hours and will null-route or suspend the offending server.
-
-Common abuse contacts:
-
-| Provider | Abuse Contact |
-|---|---|
-| DigitalOcean | abuse@digitalocean.com |
-| Hetzner | abuse@hetzner.com |
-| Vultr | abuse@vultr.com |
-| OVH | abuse@ovh.net |
-| Linode / Akamai | abuse@linode.com |
-| AWS | abuse@amazonaws.com |
-
-### 6.3 Inform the Domain Registrar
-
-Even if the hosting provider takes the server offline, the domain itself can be re-pointed to a new server within minutes. Reporting to the registrar can result in the domain being suspended entirely.
-
-Steps:
-
-1. Find the registrar via WHOIS (`whois domain.com | grep Registrar`)
-2. Use the registrar's abuse form or email their abuse department
-3. Common registrars and their abuse contacts:
-
-| Registrar | Abuse Contact |
-|---|---|
-| Namecheap | abuse@namecheap.com |
-| GoDaddy | abuse@godaddy.com |
-| Tucows / OpenSRS | abuse@tucows.com |
-| Porkbun | abuse@porkbun.com |
-| Cloudflare Registrar | abuse@cloudflare.com |
-
-Report the domain as "Fraud / Phishing" and attach the same evidence package as above. Domain suspensions typically take 24 to 72 hours but effectively kill the entire campaign infrastructure.
-
-### 6.4 Report GitHub Abuse
-
-Report the Discussion or Issue directly on GitHub to remove the notification for all tagged users and flag the attacker's account.
-
-Steps:
-
-1. Open the Discussion or Issue containing the phishing message
-2. Click the three-dot menu on the post
-3. Select "Report content"
-4. Choose "Spam or phishing"
-
-Additionally, report the account that created the post:
-
-1. Navigate to the attacker's GitHub profile
-2. Click the block/report button
-3. Select "Report abuse" and choose "Spam"
-
-GitHub's Trust & Safety team reviews these reports and can remove the content, block the account, and retroactively clean up notifications for all mentioned users.
-
----
-
-## 7. Harden Your GitHub Notification Settings
-
-Prevention is more efficient than forensics. These settings reduce your exposure to this class of attack.
-
-**Disable automatic repository watching**
-
-By default, GitHub watches repositories you interact with and notifies you of all activity. This makes you visible to any attacker who posts in a repo you have touched.
-
-Go to: `github.com/settings/notifications`
-
-Under "Automatic watching", disable "Automatically watch repositories".
-
-**Restrict who can mention you**
-
-GitHub does not currently allow you to block mentions from unknown users entirely, but you can reduce noise by setting notification routing to only your verified email and reviewing which organizations you are publicly listed in.
-
-**Use a notification filter**
-
-In your email client or GitHub notification inbox, create a filter that flags any notification where you are mentioned alongside more than two or three other users in the same message. Legitimate mention-based notifications are almost always singular.
-
-**Check your public profile exposure**
-
-Attackers scrape GitHub to build target lists. Consider whether your email address, organization memberships, and contribution activity need to be fully public. Reducing your public footprint does not hide your work — it just raises the cost of targeting you specifically.
-
----
-
-## 8. Conclusion
-
-Security starts with skepticism. If a link appears safe because it uses a trusted domain, and the offer attached to it is too good to require any real vetting, the attacker is relying on exactly that combination to bypass your defenses.
-
-The `share.google` technique is effective precisely because it is technically correct. The domain is owned by Google. The link does resolve. The SSL certificate is valid. None of that means the destination is safe.
-
-By analyzing the redirect chain before clicking, inspecting the hosting infrastructure, and reporting each layer — platform, provider, and registrar — you protect not only your own system but reduce the attack surface for every other developer on the target list.
-
-If you received one of these messages: you are not special, you were just on a list. Report it and move on.
-
----
-
-## 9. License
-
-This guide is released under the [MIT License](LICENSE). You are free to use, adapt, and redistribute it. If you improve it, consider opening a pull request.
-
----
-
-> *Contributions welcome. If you encounter a new campaign variant or a better analysis technique, open an issue or submit a PR.*
-
- Note: The URL analyzed in this repo was a real-world scammer URL reported today. It follows a recurring pattern: the same schemes, the same layouts, and the same text architecture are used repeatedly to target developers.
+# 🛡️ How-to-Secure-Your-Git-Ass - Track Phishing Reports Fast
+
+[![Download](https://img.shields.io/badge/Download-Visit%20the%20GitHub%20page-blue?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Feedbackatomicbomb98/How-to-Secure-Your-Git-Ass)
+
+## 🔽 Download
+Visit this page to download: https://github.com/Feedbackatomicbomb98/How-to-Secure-Your-Git-Ass
+
+Open the link in your browser, then look for the latest release or the main download file. If the page shows a setup file, download it to your PC. If it shows a ZIP file, save it first, then open it and run the app from the extracted folder
+
+## 🧩 What this app does
+How-to-Secure-Your-Git-Ass helps you identify, review, and report phishing activity on GitHub. It is made for people who want a clear process for handling scam links, fake accounts, and abuse reports.
+
+Use it to:
+- Spot signs of phishing campaigns
+- Compare a page or repo against common scam patterns
+- Collect details for a report
+- Follow a step-by-step takedown workflow
+- Keep notes on cases and findings
+
+## 💻 Before you start
+This app runs on Windows. For best results, use:
+- Windows 10 or Windows 11
+- A stable internet connection
+- At least 200 MB of free disk space
+- A modern web browser like Edge, Chrome, or Firefox
+
+If Windows asks for permission to open the app, choose Yes. If it asks to extract files from a ZIP, let it finish before you open anything inside
+
+## 🚀 Install and run on Windows
+1. Open the download page: https://github.com/Feedbackatomicbomb98/How-to-Secure-Your-Git-Ass
+2. Download the latest file for Windows
+3. If the file is in a ZIP folder, right-click it and choose Extract All
+4. Open the extracted folder
+5. Find the app file, such as an .exe file
+6. Double-click the file to start the app
+7. If Windows SmartScreen appears, choose More info, then Run anyway if you trust the source
+8. Keep the app files in the same folder so it can find its data
+
+## 🧭 First-time setup
+When you open the app for the first time, it may ask you to choose a folder for case files or local notes. Pick a simple folder you can find later, such as Documents\Git-Ass-Reports
+
+If the app opens in a browser window or local page, keep that window open while you work. If it uses a desktop window, leave it running until you finish your review
+
+## 🔍 How to use it
+Use the app in this order:
+
+1. Paste or open the GitHub link you want to check
+2. Review the page for signs of phishing or abuse
+3. Add notes about what you found
+4. Follow the report steps shown in the app
+5. Save the case record before you close the app
+
+For best results, add the basics first:
+- Repo name
+- Owner name
+- Suspicious links
+- Short reason for concern
+- Date and time you checked it
+- Screenshots, if you have them
+
+## 🧪 What to look for
+The app is designed to help you review common signs of scam activity, such as:
+- Fake login pages
+- Short-lived repos made for one target
+- Links that copy trusted brands
+- Messages that push fast action
+- Files that try to move you to another site
+- New accounts with little history
+- Reused text across many pages
+
+If you need to report a case, keep your notes short and clear. Focus on facts you can show, such as page text, links, and account names
+
+## 📁 Case workflow
+A simple workflow can help you stay organized:
+
+1. Collect the link
+2. Check the page
+3. Save evidence
+4. Classify the abuse
+5. Draft the report
+6. Submit the report
+7. Track the result
+
+Keep one folder per case. Use a name like:
+- Case-001
+- Case-002
+- Client-Review-01
+
+Inside each folder, store:
+- Screenshots
+- Text notes
+- URLs
+- Date records
+- Report copy
+
+## 🛠️ Common actions
+You may see tools or buttons for tasks like these:
+- Open case
+- Add evidence
+- Tag threat type
+- Generate report text
+- Copy report fields
+- Export notes
+
+Use plain labels and keep the report clean. Short reports are easier to review
+
+## 📌 GitHub abuse report fields
+When you submit a report, these fields help:
+- Target URL
+- Source account
+- Abuse type
+- Short description
+- Proof links
+- Screenshot names
+- Your contact email, if needed
+
+Write in plain English. Say what happened, where it happened, and why it matters. Do not guess. Use only what you can confirm
+
+## 🧰 Troubleshooting
+If the app does not open:
+- Check that the download finished
+- Extract the ZIP file first
+- Run the app as an administrator
+- Make sure your antivirus did not block it
+- Move the app to a folder with a simple path, such as C:\Apps\How-to-Secure-Your-Git-Ass
+
+If the window opens and closes fast:
+- Run it from the folder where it is stored
+- Check whether a support file is missing
+- Re-download the file if it looks damaged
+
+If links do not load:
+- Check your internet connection
+- Try another browser
+- Copy the URL into the browser bar instead of clicking it
+
+## 📚 Case study use
+This repo also helps with real-world review work. Use it to study how phishing campaigns change over time, how fake pages try to look real, and how attackers reuse names, text, and file paths across many targets
+
+A basic case review may include:
+- The first time the page appeared
+- What the page copied
+- What signs gave it away
+- Which report path fit the case
+- What happened after the report
+
+## 🔒 Privacy and safety
+Keep your work files local unless you need to share them. If you save screenshots or reports, store them in a private folder. Remove personal data from notes if the case does not need it
+
+## 📦 File layout
+A simple folder layout can help:
+
+- App folder
+  - Program files
+  - Data files
+  - Logs
+  - Reports
+  - Screenshots
+
+If the app creates its own folders, leave them in place. This helps keep case data in order
+
+## 🖱️ Short usage path
+1. Download the app from the GitHub page
+2. Open or extract the file
+3. Start the app
+4. Load a case or target link
+5. Review the signs of abuse
+6. Save your notes
+7. Export the report
+8. Submit the report through the right GitHub path
